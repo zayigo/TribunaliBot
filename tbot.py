@@ -20,7 +20,11 @@ config = ScanConfig.from_environ()
 
 sentry_logging = LoggingIntegration(level=logging.INFO, event_level=logging.ERROR)
 
-sentry_sdk.init(config.sentry, traces_sample_rate=1.0, integrations=[sentry_logging, SqlalchemyIntegration()])
+sentry_sdk.init(
+    config.sentry,
+    traces_sample_rate=1.0,
+    integrations=[sentry_logging, SqlalchemyIntegration()],
+)
 
 
 class Commander:
@@ -31,15 +35,20 @@ class Commander:
     def send_and_log(self, text: str):
         log.info(text)
         with SessionFactory() as session:
-            Message.create(session, text=f"<b>{text}</b>", username=config.support_channel, priority=1000)
+            Message.create(
+                session,
+                text=f"<b>{text}</b>",
+                username=config.support_channel,
+                priority=1000,
+            )
 
     def notify(self, action):
         if action == "end":
-            text = '✅  TAR scan completed'
+            text = "✅  TAR scan completed"
         elif action == "error":
-            text = '🆘  TAR scan error'
+            text = "🆘  TAR scan error"
         elif action == "start":
-            text = 'ℹ️  TAR scan started'
+            text = "ℹ️  TAR scan started"
         self.send_and_log(text=text)
 
     def start(self):
@@ -58,7 +67,12 @@ class Commander:
 
 
 @click.command()
-@click.option('--on/--off', 'notifications', default=config.notifications, help="Enable notifications")
+@click.option(
+    "--on/--off",
+    "notifications",
+    default=config.notifications,
+    help="Enable notifications",
+)
 # @click.option('--court-id', "-t", "court_ids", required=False, type=str, multiple=True)
 def main(notifications: bool):
     start_tbot(notifications)

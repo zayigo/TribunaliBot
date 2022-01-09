@@ -17,8 +17,10 @@ from postman.config import PostmanConfig
 config = PostmanConfig.from_environ()
 
 
-class Postman():
-    def __init__(self, token: str, attempts: int, config_poll_time: int, batch_size: int):
+class Postman:
+    def __init__(
+        self, token: str, attempts: int, config_poll_time: int, batch_size: int
+    ):
         self.token = token
         self.attempts = attempts
         self.config_poll_time = config_poll_time
@@ -34,23 +36,35 @@ class Postman():
         time_before = self.poll_time
         if increase and self.poll_time < self.config_poll_time:
             self.poll_time += 1
-            log.info(f"Increased poll time {time_before} -> {self.poll_time}", extra={"tag": self.role})
+            log.info(
+                f"Increased poll time {time_before} -> {self.poll_time}",
+                extra={"tag": self.role},
+            )
         elif not increase and self.poll_time > 0:
             if self.msg.priority > 0:
                 self.poll_time = 0
             else:
                 self.poll_time -= 1
-            log.info(f"Decreased poll time {time_before} -> {self.poll_time}", extra={"tag": self.role})
+            log.info(
+                f"Decreased poll time {time_before} -> {self.poll_time}",
+                extra={"tag": self.role},
+            )
 
     def poll(self):
         try:
             while True:
                 with SessionFactory() as session:
-                    stmt = select(Message).where(
-                        and_(Message.sent == false(), Message.error.is_(None))
-                    ).order_by(Message.priority.desc(), Message.timestamp.asc()).limit(self.batch_size)
+                    stmt = (
+                        select(Message)
+                        .where(and_(Message.sent == false(), Message.error.is_(None)))
+                        .order_by(Message.priority.desc(), Message.timestamp.asc())
+                        .limit(self.batch_size)
+                    )
                     self.messages = session.execute(stmt).scalars().all()
-                    log.info(f"Processing {len(self.messages)} messages", extra={"tag": self.role})
+                    log.info(
+                        f"Processing {len(self.messages)} messages",
+                        extra={"tag": self.role},
+                    )
                     if not self.messages:
                         self.update_poll_time(increase=True)
                     for msg in self.messages:
@@ -66,7 +80,7 @@ class Postman():
                         session.commit()
                 log.info(
                     f"Finished sending messages, going to sleep for {self.poll_time} seconds",
-                    extra={"tag": self.role}
+                    extra={"tag": self.role},
                 )
                 pause.seconds(self.poll_time)
         except KeyboardInterrupt:
@@ -80,7 +94,7 @@ class Postman():
             btn_layout.append(
                 telebot.types.InlineKeyboardButton(
                     self.templates["italian"]["keyboard"]["inline_buttons"]["details"],
-                    callback_data=f"a.info:{self.msg.act.uuid}"
+                    callback_data=f"a.info:{self.msg.act.uuid}",
                 )
             )
         else:
@@ -94,7 +108,7 @@ class Postman():
                 btn_layout.append(
                     telebot.types.InlineKeyboardButton(
                         self.templates["italian"]["keyboard"]["inline_buttons"]["docs"],
-                        url=config.url.deeplink.format(f"docs-{self.msg.act.uuid}")
+                        url=config.url.deeplink.format(f"docs-{self.msg.act.uuid}"),
                     )
                 )
         kb.add(*btn_layout)
@@ -111,18 +125,22 @@ class Postman():
                     chat_id=dest,
                     parse_mode="html",
                     reply_markup=kb,
-                    disable_web_page_preview=disable_preview
+                    disable_web_page_preview=disable_preview,
                 )
             except Exception as e:
                 self.msg.error = repr(e)
-                log.exception(f"Error while sending message {self.msg}", extra={"tag": self.role})
+                log.exception(
+                    f"Error while sending message {self.msg}", extra={"tag": self.role}
+                )
                 pause.milliseconds(5000 * attempts)
             else:
                 self.msg.sent = True
                 self.msg.sent_at = dt.datetime.now()
                 self.msg.message_id = result.message_id
                 self.msg.chat_id = result.chat.id
-                log.info(f"Successfully sent message {self.msg}", extra={"tag": self.role})
+                log.info(
+                    f"Successfully sent message {self.msg}", extra={"tag": self.role}
+                )
                 pause.milliseconds(3000)
                 break
 
@@ -132,9 +150,13 @@ class Postman():
             if not result:
                 raise Exception("Message not found")
             try:
-                self.bot.delete_message(chat_id=result.chat_id, message_id=result.message_id)
+                self.bot.delete_message(
+                    chat_id=result.chat_id, message_id=result.message_id
+                )
                 result.deleted = True
                 session.commit()
                 log.info(f"Deleted message: {message_id}", extra={"tag": "DB"})
             except Exception:
-                log.error(f"Error while deleting message: {message_id}", extra={"tag": "DB"})
+                log.error(
+                    f"Error while deleting message: {message_id}", extra={"tag": "DB"}
+                )

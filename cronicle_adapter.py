@@ -10,4 +10,6 @@ log.info(f"Starting Cronicle job - {data}")
 
 params = data["params"]
 
-start_from_cronicle(notifications=bool(params["notifications"]), )
+start_from_cronicle(
+    notifications=bool(params["notifications"]),
+)

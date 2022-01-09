@@ -18,15 +18,21 @@ config = TelegramConfig.from_environ()
 
 sentry_logging = LoggingIntegration(level=logging.INFO, event_level=logging.ERROR)
 
-sentry_sdk.init(config.sentry, traces_sample_rate=1.0, integrations=[sentry_logging, SqlalchemyIntegration()])
+sentry_sdk.init(
+    config.sentry,
+    traces_sample_rate=1.0,
+    integrations=[sentry_logging, SqlalchemyIntegration()],
+)
 
 routes = web.RouteTableDef()
 
 
 def listener(messages):
     for m in messages:
-        if m.content_type == 'text':
-            log.debug(f"{m.chat.first_name} [{m.chat.id}]: {m.text}", extra={"tag": "TG-MSG"})
+        if m.content_type == "text":
+            log.debug(
+                f"{m.chat.first_name} [{m.chat.id}]: {m.text}", extra={"tag": "TG-MSG"}
+            )
 
 
 @web.middleware
@@ -41,10 +47,10 @@ async def error_middleware(request, handler):
         if ex.status != 404:
             raise
         message = ex.reason
-    return web.json_response({'error': message})
+    return web.json_response({"error": message})
 
 
-@routes.post('/')
+@routes.post("/")
 async def handle(request):
     request_body_dict = await request.json()
     update = telebot.types.Update.de_json(request_body_dict)
@@ -55,7 +61,7 @@ async def handle(request):
     return web.Response()
 
 
-@routes.get('/ok')
+@routes.get("/ok")
 async def health_check(request):
     return web.Response(text="OK")
 
@@ -64,7 +70,12 @@ def main():
     templates = requests.get(config.url.templates).json()
     # bot.set_webhook(url=config.main.webhook + config.main.token, drop_pending_updates=True)
     bot.set_update_listener(listener)
-    bot.set_my_commands([BotCommand(name, desc) for name, desc in templates["italian"]["commands"].items()])
+    bot.set_my_commands(
+        [
+            BotCommand(name, desc)
+            for name, desc in templates["italian"]["commands"].items()
+        ]
+    )
     app = web.Application(middlewares=[error_middleware], logger=log)
     app.add_routes(routes)
     log.info("Bot started", extra={"tag": "TG"})

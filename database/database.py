@@ -12,7 +12,7 @@ url = URL.create(
     password=config.password,
     host=config.host,
     port=config.port,
-    database=config.database
+    database=config.database,
 )
 
 engine = create_engine(url, echo=config.log_queries, future=True)

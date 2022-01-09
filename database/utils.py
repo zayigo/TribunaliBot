@@ -14,7 +14,7 @@ from database.config import ActConfig
 from logger.logger import log
 
 
-class UserHelper():
+class UserHelper:
     @classmethod
     def update_by_id(cls, session, id_: int, dct) -> Boolean:
         try:
@@ -49,16 +49,26 @@ class UserHelper():
         return session.execute(stmt).scalars().all()
 
 
-class TrackingHelper():
+class TrackingHelper:
     @classmethod
     def get_users_id(cls, session, court_id: str, only_tlc=False):
         if only_tlc:
-            stmt = select(cls.user_id).join(models.User).where(
-                and_(cls.court_id == court_id, models.User.is_banned == false())
+            stmt = (
+                select(cls.user_id)
+                .join(models.User)
+                .where(and_(cls.court_id == court_id, models.User.is_banned == false()))
             )
         else:
-            stmt = select(cls.user_id).join(models.User).where(
-                and_(cls.court_id == court_id, cls.track_all == true(), models.User.is_banned == false())
+            stmt = (
+                select(cls.user_id)
+                .join(models.User)
+                .where(
+                    and_(
+                        cls.court_id == court_id,
+                        cls.track_all == true(),
+                        models.User.is_banned == false(),
+                    )
+                )
             )
         return session.execute(stmt).scalars().all()
 
@@ -75,7 +85,11 @@ class TrackingHelper():
     @classmethod
     def update(cls, session, user_id: int, court_id: str, new_state):
         dct = {"track_all": new_state}
-        stmt = update(cls).where(and_(cls.user_id == user_id, cls.court_id == court_id)).values(dct)
+        stmt = (
+            update(cls)
+            .where(and_(cls.user_id == user_id, cls.court_id == court_id))
+            .values(dct)
+        )
         session.execute(stmt)
         session.commit()
         log.info(f"Updated tracking {user_id} -> {dct}", extra={"tag": "DB"})
@@ -101,23 +115,36 @@ class TrackingHelper():
         tracking = cls(user_id=user_id, court_id=court_id)
         session.add(tracking)
         session.commit()
-        log.info(f"New tracking added: {user_id} - {tracking.court}", extra={"tag": "DB"})
+        log.info(
+            f"New tracking added: {user_id} - {tracking.court}", extra={"tag": "DB"}
+        )
         return tracking.court, False
 
     @classmethod
     def paginate(cls, session, page: int, page_size: int):
-        stmt = select(models.Court).limit(page_size).offset(page * page_size).order_by(models.Court.name)
+        stmt = (
+            select(models.Court)
+            .limit(page_size)
+            .offset(page * page_size)
+            .order_by(models.Court.name)
+        )
         courts = session.execute(stmt).scalars().all()
         stmt = select(func.count(models.Court.id))
         count = session.execute(stmt).scalar()
         return courts, count
 
 
-class ActHelper():
+class ActHelper:
 
     config = ActConfig.from_environ()
-    hash_ = Hashids(salt=config.hash_secret, min_length=16) if config.hash_secret else None
-    templates = requests.get(config.url.templates, timeout=60).json() if config.url.templates else []
+    hash_ = (
+        Hashids(salt=config.hash_secret, min_length=16) if config.hash_secret else None
+    )
+    templates = (
+        requests.get(config.url.templates, timeout=60).json()
+        if config.url.templates
+        else []
+    )
 
     @classmethod
     def get_info_id(cls, session, uuid: str):
@@ -168,7 +195,9 @@ class UserReportHelper:
 
 class MessageHelper:
     @classmethod
-    def create(cls, session, text: str, user_id: int = None, username: str = "", priority=0):
+    def create(
+        cls, session, text: str, user_id: int = None, username: str = "", priority=0
+    ):
         msg = cls(text=text, priority=priority)
         if user_id:
             msg.user_id = user_id
@@ -183,7 +212,9 @@ class MessageHelper:
 
     @classmethod
     def get_by_tg_ids(cls, session, message_id: int, chat_id: int):
-        stmt = select(cls).where(and_(cls.message_id == message_id, cls.chat_id == chat_id))
+        stmt = select(cls).where(
+            and_(cls.message_id == message_id, cls.chat_id == chat_id)
+        )
         return session.execute(stmt).scalars().one()
 
 

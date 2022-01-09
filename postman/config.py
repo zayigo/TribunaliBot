@@ -5,7 +5,9 @@ import environ
 class PostmanConfig:
     sentry = environ.var()
     poll_time = environ.var(help="Time in seconds between updates", converter=int)
-    batch_size = environ.var(help="Number of messages to process before going back to sleep", converter=int)
+    batch_size = environ.var(
+        help="Number of messages to process before going back to sleep", converter=int
+    )
     attempts = environ.var(help="Max retries", converter=int)
     token = environ.var(name="TBOT_TG_MAIN_TOKEN")
 

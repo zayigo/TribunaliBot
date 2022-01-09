@@ -14,7 +14,7 @@ MAX_PAGES = 10
 RE_WHITESPACE = r"\s+|„|“|”|\.{2,}| {2,}"
 
 
-class Scraper():
+class Scraper:
     def __init__(self, notification: bool):
         self.notification = notification
         self.acts = []
@@ -28,7 +28,7 @@ class Scraper():
         log.info(f"Scraping atto {act}", extra={"tag": self.role})
         dct = {}
         response = self.req.get(act["url_testo"], timeout=60)
-        soup = BeautifulSoup(response.text, 'lxml')
+        soup = BeautifulSoup(response.text, "lxml")
         dct["testo"] = soup.get_text("\n", strip=True)
         result_1 = re.search(r"Pubblicato il (\d{2}/\d{2}/\d{4})", response.text)
         if result_1:
@@ -51,17 +51,25 @@ class Scraper():
         log.info(f"Scraping list {self.court} - page {page}", extra={"tag": self.role})
         reqBody = {
             "_GaSearch_INSTANCE_2NDgCF3zWBwk_hiddenType": "Provvedimenti",
-            "_GaSearch_INSTANCE_2NDgCF3zWBwk_pageResultsProvvedimenti": str(QUERY_LENGHT),
+            "_GaSearch_INSTANCE_2NDgCF3zWBwk_pageResultsProvvedimenti": str(
+                QUERY_LENGHT
+            ),
             # "_GaSearch_INSTANCE_2NDgCF3zWBwk_DataYearItem": str(datetime.now().year),
             "_GaSearch_INSTANCE_2NDgCF3zWBwk_IsAdvanced": "false",
             "_GaSearch_INSTANCE_2NDgCF3zWBwk_step": str(page),  # pagina 0,1,2
             "_GaSearch_INSTANCE_2NDgCF3zWBwk_sedeProvvedimenti": self.court.raw_name,
         }
-        headers = {"Cookie": "LRGASESSION=" + self.req.cookies.get_dict()["LRGASESSION"]}
-        response = self.req.post(self.url, verify=False, headers=headers, data=reqBody, timeout=60)
-        soup = BeautifulSoup(response.text, 'lxml')
+        headers = {
+            "Cookie": "LRGASESSION=" + self.req.cookies.get_dict()["LRGASESSION"]
+        }
+        response = self.req.post(
+            self.url, verify=False, headers=headers, data=reqBody, timeout=60
+        )
+        soup = BeautifulSoup(response.text, "lxml")
         try:
-            self.last_page = int(soup.find_all("li", class_="pagination-number")[-1].text)  # - 1
+            self.last_page = int(
+                soup.find_all("li", class_="pagination-number")[-1].text
+            )  # - 1
         except IndexError:
             self.last_page = 0
         acts = soup.find_all("article", class_="ricerca--item")
@@ -74,11 +82,13 @@ class Scraper():
             dct["sede"] = details[1].text.strip()
             dct["sezione"] = details[2].text.strip()
             dct["numero_provvedimento"] = details[3].text.strip()
-            dct["url_testo"] = urllib.parse.urljoin(URL_LIST, parts[0].find("a", href=True)["href"])
+            dct["url_testo"] = urllib.parse.urljoin(
+                URL_LIST, parts[0].find("a", href=True)["href"]
+            )
             self.acts.append(dct)
 
     def save_act(self, session, act, send_notification):
-        act.uuid_hr = act.uuid_hr.upper().replace(u"\xa0", "").replace(" ", "").strip()
+        act.uuid_hr = act.uuid_hr.upper().replace("\xa0", "").replace(" ", "").strip()
         if Act.get_by_uuid_hr(session, uuid_hr=act.uuid_hr):
             log.debug(f"Duplicate act {act}", extra={"tag": self.role})
             return True
@@ -104,7 +114,9 @@ class Scraper():
             text=dct.pop("testo_short"),
             full_text=dct.pop("testo"),
             date=date,
-            info=ActInfo(docs=[Doc(url=dct.pop("url_testo"), type="web")], extra_info=dct)
+            info=ActInfo(
+                docs=[Doc(url=dct.pop("url_testo"), type="web")], extra_info=dct
+            ),
         )
         return self.save_act(session, act=act, send_notification=self.notification)
 
@@ -129,7 +141,10 @@ class Scraper():
                     if dupe:
                         break
             if dupe:
-                log.info(f"Stopped scanning {self.court.name} - Duplicates found", extra={"tag": self.role})
+                log.info(
+                    f"Stopped scanning {self.court.name} - Duplicates found",
+                    extra={"tag": self.role},
+                )
                 break
 
     def scan(self):
