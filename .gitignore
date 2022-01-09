@@ -21,7 +21,7 @@ conftest.py
 *_test.*
 *.lock
 Pipfile.lock
-config/
+.config/
 dev/
 *.ipynb
 snippets/
