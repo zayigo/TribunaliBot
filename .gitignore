@@ -1,0 +1,37 @@
+# cache
+__pycache__
+.pytest_cache
+.handler-saves
+.mypy_cache
+_image_overlays
+# ide settings
+.vscode
+# useless files
+*.ipynb
+*.old
+*.ini
+*.list
+*.csv
+debug.log
+chromedriver
+dev*.py
+test*.py
+*.txt
+conftest.py
+*_test.*
+*.lock
+Pipfile.lock
+config/
+dev/
+*.ipynb
+snippets/
+tempCodeRunnerFile.python
+*.md
+*.env
+tempCodeRunnerFile.py
+Caddyfile
+.token
+support-bot/
+.secrets
+cronicle.json
+tools/files

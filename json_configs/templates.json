@@ -1,0 +1,62 @@
+{
+  "italian": {
+    "messages": {
+      "template": "⚖️  <b>TAR {tribunale} - {sezione}</b>\n🏷  #{tipo}\n📆  {date}\n\n{text}...",
+      "welcome": "<b>Benvenuto {user_name}!</b> 😊\n\nGrazie a @{bot_name} potrai tenere traccia dei provvedimenti dei TAR (Tribunali Amministrativi Regionali).",
+      "welcome_2": "Per qualsiasi dubbio, suggerimento o problema puoi scrivere a @help_permessibot\n\nInvia /help per una breve guida all'utilizzo del bot.",
+      "help": "👨‍💻  <b>Comandi:</b>{commands}\n\nVuoi leggere i provvedimenti provvedimenti pubblicati prima della tua iscrizione? 👉🏻 {channel_name}\n\n<a href=\"{donation_url}\">☕  Offrimi un caffè</a>",
+      "court_add": "Seleziona un tribunale per gestire le impostazioni di notifica o premi /annulla",
+      "cancel": "Azione annullata 👏🏻👏🏻",
+      "report": "Grazie per la segnalazione! 💘",
+      "report-error": "Hai già segnalato questo procedimento",
+      "report_admin": "⚠️ <b>Segnalazione da</b> <a href=\"tg://user?id={user_id}\">{username}</a>\n\n<pre>{act}</pre>\n\n<a href=\"{deeplink}\">Apri ➡️</a>",
+      "debug": "❔ Debug\n\n<pre>{user}</pre>",
+      "court_delete": "Non riceverai più notifiche da questo tribunale",
+      "track_all": "🔔 Riceverai una notifica per qualsiasi procedimento del tribunale di {court_name}",
+      "track_tlc": "🔕 Riceverai una notifica solamente per i procedimenti con riferimenti alle telecomunicazioni (fibra, telefonia, internet, ecc.)",
+      "court_info": "<b>Tribunale di {court_name}</b>\n\n👥  <b>Utenti:</b> {user_count}\n📝  <b>Procedimenti:</b> {act_count} (di cui TLC: {act_count_tlc})",
+      "extra_info": "<b>ℹ️  Informazioni</b>\n\n{dct_info}\n• Telecomunicazioni: <code>{is_tlc}</code>{isp}"
+    },
+    "commands": {
+      "aggiungi": "abilita le notifiche di un tribunale",
+      "lista": "visualizza e gestisci i tribunali",
+      "annulla": "annulla il comando in corso",
+      "help": "hai bisogno di aiuto?"
+    },
+    "errors": {
+      "started": "Hai già avviato il bot 🌚",
+      "generic": "<b>Non ho capito il tuo messaggio!</b> 😳\nPremi /annulla e riprova, se pensi che sia un errore scrivi a @help_permessibot",
+      "act_not_found": "Provvedimento non trovato, riprova o scrivi a @help_permessibot",
+      "not_available": "non disponibile"
+    },
+    "keyboard": {
+      "buttons": {
+        "add": "🔍 Aggiungi",
+        "list": "📄 Lista",
+        "cancel": "❌ Annulla",
+        "help": "❔ Aiuto"
+      },
+      "inline_buttons": {
+        "add": "➕ Aggiungi",
+        "delete": "❌ Rimuovi",
+        "back": "⬅️ Indietro",
+        "p_next": "Avanti ➡️",
+        "p_back": "◀️ Indietro",
+        "court": "🏛️ Tribunale",
+        "docs": "📚 Allegati",
+        "info": "ℹ️ Altro",
+        "details": "🔎 Dettagli",
+        "report": "⚠️ Segnala errore",
+        "track_all": "🔔 Ricevi tutte le notifiche",
+        "track_tlc": "🔕 Ricevi solo notifiche TLC"
+      }
+    },
+    "answers": {
+      "court_info": "🏛️ Dettagli",
+      "docs": "📚 Allegati",
+      "extra": "ℹ️ Altro",
+      "back": "⬅️ Indietro",
+      "forward": "Avanti "
+    }
+  }
+}

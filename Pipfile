@@ -1,0 +1,46 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+flake8 = "*"
+bandit = "*"
+pytest-sugar = "*"
+pytest-cov = "*"
+pytest = "*"
+isort = "*"
+pre-commit = "*"
+memory-profiler = "*"
+rope = "*"
+py-spy = "*"
+jedi = "*"
+autopep8 = "*"
+yapf = "*"
+sqlalchemy-migrate = "*"
+ipykernel = "*"
+pylint = "*"
+jupyter = "*"
+vulture = "*"
+feedparser = "*"
+python-dotenv = "*"
+
+[packages]
+requests = "*"
+pytelegrambotapi = "*"
+bs4 = "*"
+hashids = "*"
+fuzzywuzzy = "*"
+click = "*"
+sentry-sdk = {extras = ["flask"], version = "*"}
+environ-config = "*"
+coloredlogs = "*"
+psycopg2-binary = "*"
+graypy = "*"
+lxml = "*"
+pause = "*"
+python-levenshtein = "*"
+aiohttp = "*"
+
+[requires]
+python_version = "3"
