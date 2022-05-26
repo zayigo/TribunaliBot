@@ -26,7 +26,7 @@ def main():
         keywords=config.keywords,
         config_poll_time=config.poll_time,
         batch_size=config.batch_size,
-        tg_channel_id=config.tg_channel_id
+        tg_channel_id=config.tg_channel_id,
     )
     sherlock.poll()
 
