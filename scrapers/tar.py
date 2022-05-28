@@ -1,12 +1,14 @@
-import requests
-from sqlalchemy.future import select
-from database.models import Act, ActInfo, Doc, Court
-from logger.logger import log
-from bs4 import BeautifulSoup
+import re
 import urllib.parse
 from datetime import datetime
-import re
+
+import requests
+from bs4 import BeautifulSoup
+from sqlalchemy.future import select
+
 from database.database import SessionFactory
+from database.models import Act, ActInfo, Court, Doc
+from logger.logger import log
 
 URL_LIST = "https://www.giustizia-amministrativa.it/web/guest/dcsnprr"
 QUERY_LENGHT = 100
@@ -26,22 +28,16 @@ class Scraper():
 
     def parse_details(self, act):
         log.info(f"Scraping atto {act}", extra={"tag": self.role})
-        dct = {}
         response = self.req.get(act["url_testo"], timeout=60)
         soup = BeautifulSoup(response.text, 'lxml')
-        dct["testo"] = soup.get_text("\n", strip=True)
-        result_1 = re.search(r"Pubblicato il (\d{2}/\d{2}/\d{4})", response.text)
-        if result_1:
-            dct["data"] = result_1.group(1)
-        result_2 = re.search(r"(\d{2}/\d{2}/\d{4})", response.text)
-        if result_2:
-            dct["data"] = result_2.group(1)
+        dct = {"testo": soup.get_text("\n", strip=True)}
+        if result_1 := re.search(r"Pubblicato il (\d{2}/\d{2}/\d{4})", response.text):
+            dct["data"] = result_1[1]
+        if result_2 := re.search(r"(\d{2}/\d{2}/\d{4})", response.text):
+            dct["data"] = result_2[1]
         p_tags = soup.find_all("p")
-        index = 0
-        for count, p in enumerate(p_tags):
-            if p.has_attr("class") and p["class"][0] == "sezione":
-                index = count
-                break
+        index = next((count for count, p in enumerate(p_tags) if p.has_attr("class") and p["class"][0] == "sezione"),
+                     0)
         p_text = [p.text for p in soup.find_all("p")[index:]]
         p_text = "\n".join(p_text)
         dct["testo_short"] = re.sub(RE_WHITESPACE, " ", p_text).strip()[:1000]
@@ -140,5 +136,5 @@ class Scraper():
             self.court = t
             try:
                 self.scan_court()
-            except:
+            except Exception:
                 log.exception(f"Error while scanning {t}", extra={"tag": self.role})

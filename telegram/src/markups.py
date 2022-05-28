@@ -5,8 +5,8 @@ from typing import List, Union
 
 import requests
 from telebot import types
-from database.database import SessionFactory
 
+from database.database import SessionFactory
 from database.models import Court, Tracking
 from telegram.config import TelegramConfig
 
@@ -103,8 +103,10 @@ def courts_list(
     btn_layout = []
     with SessionFactory() as session:
         for c in courts:
-            is_tracking = session.get(Tracking, {"court_id": c.id, "user_id": user_id})
-            emoji = "✅" if is_tracking else "❌"
+            if court_tracking := session.get(Tracking, {"court_id": c.id, "user_id": user_id}):
+                emoji = "🟢" if court_tracking.track_all else "🟡"
+            else:
+                emoji = "🔴"
             payload = f"{action}:{c.id}"
             if back:
                 payload += f":{back}"

@@ -1,5 +1,4 @@
 import datetime as dt
-import re
 import sys
 
 import pause
@@ -59,7 +58,7 @@ class Postman():
                         kb = None
                         if msg.act:
                             msg.short_url = config.url.deeplink.format(msg.act.uuid)
-                            has_docs = len(msg.act.info.docs) > 1
+                            has_docs = len(msg.act.info.docs) > 0
                             kb = self.get_kb(has_docs=has_docs)
                             session.flush()
                         self.send_message(kb, disable_preview=(not msg.url_preview))

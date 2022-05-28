@@ -25,9 +25,9 @@ from sqlalchemy.orm.exc import DetachedInstanceError
 from sqlalchemy.sql.expression import true
 from sqlalchemy.sql.sqltypes import BigInteger
 
-Base = declarative_base()
+from database.utils import ActHelper, DocHelper, MessageHelper, TrackingHelper, UserHelper, UserReportHelper
 
-from database.utils import (UserReportHelper, TrackingHelper, ActHelper, UserHelper, DocHelper, MessageHelper)
+Base = declarative_base()
 
 
 class ReprBase():
@@ -162,7 +162,9 @@ class Court(ReprBase, Base):
     raw_name = Column(String, nullable=False, index=True)
     # one to many - Court -> acts
     acts = relationship("Act", back_populates="court", cascade="save-update")
-    act_count = column_property(select([func.count(Act.id)]).where(Act.court_id == id).scalar_subquery(), deferred=True)
+    act_count = column_property(
+        select([func.count(Act.id)]).where(Act.court_id == id).scalar_subquery(), deferred=True
+    )
     act_count_tlc = column_property(
         select([func.count(Act.id)]).where(and_(Act.court_id == id, Act.is_tlc == true())).scalar_subquery(),
         deferred=True
@@ -346,7 +348,7 @@ class User(ReprBase, UserHelper, Base):
     @hybrid_property
     def fullname(self):
         if self.firstname is not None:
-            return self.firstname + " " + self.lastname
+            return f"{self.firstname} {self.lastname}"
         return self.lastname
 
     def __repr__(self):

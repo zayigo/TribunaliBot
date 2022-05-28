@@ -1,0 +1,40 @@
+# docker run -d -p 9181:9181 --env-file "docker.env" app-telegram
+# docker-compose --env-file docker.env up
+version: "3.8"
+services:
+
+  postman:
+    container_name: tribunalibot-postman
+    image: tribunalibot-postman:latest
+    restart: "no"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Rome
+    env_file:
+      - docker.env
+
+  sherlock:
+    container_name: tribunalibot-sherlock
+    image: tribunalibot-sherlock:latest
+    restart: "no"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Rome
+    env_file:
+      - docker.env
+
+  telegram:
+    container_name: tribunalibot-telegram
+    image: tribunalibot-telegram:latest
+    restart: "unless-stopped"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Rome
+    ports:
+      - 127.0.0.1:9171:9181/tcp
+    env_file:
+      - docker.env
+

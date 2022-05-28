@@ -62,18 +62,18 @@ async def health_check(request):
 
 def main():
     templates = requests.get(config.url.templates).json()
-    # bot.set_webhook(url=config.main.webhook + config.main.token, drop_pending_updates=True)
+    bot.remove_webhook()
+    bot.set_webhook(url=config.main.webhook + config.main.token, drop_pending_updates=True)
     bot.set_update_listener(listener)
     bot.set_my_commands([BotCommand(name, desc) for name, desc in templates["italian"]["commands"].items()])
     app = web.Application(middlewares=[error_middleware], logger=log)
     app.add_routes(routes)
     log.info("Bot started", extra={"tag": "TG"})
-    # web.run_app(
-    #     app,
-    #     host="0.0.0.0",
-    #     port=9181,
-    # )
-    bot.polling(timeout=1000)
+    web.run_app(
+        app,
+        host="0.0.0.0",
+        port=9181,
+    )
 
 
 if __name__ == "__main__":

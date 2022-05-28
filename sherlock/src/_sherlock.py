@@ -1,5 +1,5 @@
-from datetime import datetime as dt
 import re
+from datetime import datetime as dt
 
 import pause
 import requests
@@ -9,7 +9,7 @@ from sqlalchemy.future import select
 from sqlalchemy.sql.expression import null
 
 from database.database import SessionFactory
-from database.models import Message, Act, Tracking
+from database.models import Act, Message, Tracking
 from logger.logger import log
 
 RE_HTML = r"<.*?>"

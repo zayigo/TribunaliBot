@@ -8,7 +8,7 @@ import telebot  # type: ignore
 from telebot import apihelper, types
 
 from database.database import SessionFactory
-from database.models import Doc, Message, Act, Court, Tracking, User, UserReport
+from database.models import Act, Court, Doc, Message, Tracking, User, UserReport
 from logger.logger import log
 from telegram.config import TelegramConfig
 from telegram.src import markups
@@ -28,10 +28,7 @@ START_DOCS = r"(?<=/start docs-)\w{16,}"
 
 
 def get_match_from_message(text, regex):
-    match = re.search(regex, text)
-    if match:
-        return match.group(0)
-    return None
+    return match[0] if (match := re.search(regex, text)) else None
 
 
 @bot.middleware_handler(update_types=['message'])
@@ -122,15 +119,7 @@ def send_act_info(m):
         edit = False
     with SessionFactory() as session:
         User.update_by_id(session, id_=m.user.id, dct={"state": 0})
-        act = Act.get_by_uuid(session, uuid=uuid)
-        if not act:
-            bot.send_message(
-                text=templates["italian"]["errors"]["act_not_found"],
-                chat_id=m.chat.id,
-                parse_mode="html",
-                reply_markup=markups.default_buttons()
-            )
-        else:
+        if act := Act.get_by_uuid(session, uuid=uuid):
             text = act.get_telegram_text()
             kb = markups.act_info(act)
             if edit:
@@ -146,6 +135,13 @@ def send_act_info(m):
                 bot.send_message(
                     text=text, chat_id=m.chat.id, parse_mode="html", reply_markup=kb, disable_web_page_preview=True
                 )
+        else:
+            bot.send_message(
+                text=templates["italian"]["errors"]["act_not_found"],
+                chat_id=m.chat.id,
+                parse_mode="html",
+                reply_markup=markups.default_buttons()
+            )
 
 
 @bot.callback_query_handler(func=lambda call: True and call.action == "c.info")

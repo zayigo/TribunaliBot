@@ -7,7 +7,7 @@ from database.config import DatabaseConfig
 config = DatabaseConfig.from_environ()
 
 url = URL.create(
-    "postgresql",
+    "postgresql+psycopg2",
     username=config.user,
     password=config.password,
     host=config.host,

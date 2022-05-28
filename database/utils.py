@@ -5,8 +5,7 @@ from hashids import Hashids
 from sqlalchemy import and_, func, update
 from sqlalchemy.future import select
 from sqlalchemy.orm import joinedload
-from sqlalchemy.sql.expression import delete, true, false
-
+from sqlalchemy.sql.expression import delete, false, true
 from sqlalchemy.sql.sqltypes import Boolean
 
 import database.models as models
@@ -93,8 +92,7 @@ class TrackingHelper():
     @classmethod
     def create(cls, session, user_id: int, court_id: str):
         stmt = select(cls).where(and_(cls.user_id == user_id, cls.court_id == court_id))
-        result = session.execute(stmt).scalar()
-        if result:
+        if result := session.execute(stmt).scalar():
             court = result.court
             log.info(f"Duplicate tracking: {user_id} - {court}", extra={"tag": "DB"})
             return court, True

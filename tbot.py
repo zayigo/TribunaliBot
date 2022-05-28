@@ -11,7 +11,6 @@ from database.database import SessionFactory
 from database.models import Message
 from logger.logger import log
 from scrapers.config.config import ScanConfig
-
 from scrapers.tar import Scraper
 
 locale.setlocale(locale.LC_ALL, "it_IT.utf8")
