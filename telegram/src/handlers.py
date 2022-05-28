@@ -31,7 +31,7 @@ def get_match_from_message(text, regex):
     return match[0] if (match := re.search(regex, text)) else None
 
 
-@bot.middleware_handler(update_types=['message'])
+@bot.middleware_handler(update_types=["message"])
 def set_user_message(bot_instance, m):
     with SessionFactory() as session:
         m.user = User.get_or_create(
@@ -44,7 +44,7 @@ def set_user_message(bot_instance, m):
         )
 
 
-@bot.middleware_handler(update_types=['callback_query'])
+@bot.middleware_handler(update_types=["callback_query"])
 def set_user_call(bot_instance, call):
     call_data = call.data.split(":")
     call.payload = call.data
@@ -56,7 +56,10 @@ def set_user_call(bot_instance, call):
     call.back = ":".join(call_data[2:]) or None
     if call.back == "None":
         call.back = None
-    log.info(f"Got call with action:'{call.action}' - data:'{call.data}' - back:'{call.back}'", extra={"tag": "TG"})
+    log.info(
+        f"Got call with action:'{call.action}' - data:'{call.data}' - back:'{call.back}'",
+        extra={"tag": "TG"},
+    )
     with SessionFactory() as session:
         call.user = User.get_or_create(
             session,
@@ -71,36 +74,52 @@ def set_user_call(bot_instance, call):
 @bot.message_handler(commands=["debug"])
 def debug(m):
     with SessionFactory() as session:
-        text = templates["italian"]["messages"]["debug"].format(user=html.escape(str(m.user)))
-        Message.create(session, username=config.support.chat_id, text=text, priority=1000)
+        text = templates["italian"]["messages"]["debug"].format(
+            user=html.escape(str(m.user))
+        )
+        Message.create(
+            session, username=config.support.chat_id, text=text, priority=1000
+        )
 
 
 @bot.message_handler(commands=["annulla"])
-@bot.message_handler(func=lambda m: m.text == templates["italian"]["keyboard"]["buttons"]["cancel"])
+@bot.message_handler(
+    func=lambda m: m.text == templates["italian"]["keyboard"]["buttons"]["cancel"]
+)
 def cancel(m):
-    """ Resets to default state """
+    """Resets to default state"""
     bot.reply_to(
         text=templates["italian"]["messages"]["cancel"],
         message=m,
         parse_mode="html",
-        reply_markup=markups.default_buttons()
+        reply_markup=markups.default_buttons(),
     )
     with SessionFactory() as session:
         User.update_by_id(session, id_=m.user.id, dct={"page": 0, "state": 0})
 
 
 @bot.message_handler(commands=["help"])
-@bot.message_handler(func=lambda m: m.text == templates["italian"]["keyboard"]["buttons"]["help"])
+@bot.message_handler(
+    func=lambda m: m.text == templates["italian"]["keyboard"]["buttons"]["help"]
+)
 def help_prompt(m):
-    """ Sends help message """
+    """Sends help message"""
     with SessionFactory() as session:
         User.update_by_id(session, id_=m.user.id, dct={"state": 0})
-    commands = "".join(f"\n• /{k} - {v}" for k, v in templates["italian"]["commands"].items())
+    commands = "".join(
+        f"\n• /{k} - {v}" for k, v in templates["italian"]["commands"].items()
+    )
     text = templates["italian"]["messages"]["help"].format(
-        commands=commands, channel_name=config.channel.name, donation_url=config.url.donate
+        commands=commands,
+        channel_name=config.channel.name,
+        donation_url=config.url.donate,
     )
     bot.reply_to(
-        text=text, message=m, parse_mode="html", disable_web_page_preview=True, reply_markup=markups.default_buttons()
+        text=text,
+        message=m,
+        parse_mode="html",
+        disable_web_page_preview=True,
+        reply_markup=markups.default_buttons(),
     )
 
 
@@ -129,18 +148,22 @@ def send_act_info(m):
                     message_id=m.message.id,
                     parse_mode="html",
                     reply_markup=kb,
-                    disable_web_page_preview=True
+                    disable_web_page_preview=True,
                 )
             else:
                 bot.send_message(
-                    text=text, chat_id=m.chat.id, parse_mode="html", reply_markup=kb, disable_web_page_preview=True
+                    text=text,
+                    chat_id=m.chat.id,
+                    parse_mode="html",
+                    reply_markup=kb,
+                    disable_web_page_preview=True,
                 )
         else:
             bot.send_message(
                 text=templates["italian"]["errors"]["act_not_found"],
                 chat_id=m.chat.id,
                 parse_mode="html",
-                reply_markup=markups.default_buttons()
+                reply_markup=markups.default_buttons(),
             )
 
 
@@ -165,7 +188,7 @@ def court_info(m):
         message_id=m.message.id,
         parse_mode="html",
         reply_markup=kb,
-        disable_web_page_preview=True
+        disable_web_page_preview=True,
     )
 
 
@@ -193,12 +216,14 @@ def info_docs(call):
                     text=templates["italian"]["errors"]["act_not_found"],
                     chat_id=call.chat.id,
                     parse_mode="html",
-                    reply_markup=markups.default_buttons()
+                    reply_markup=markups.default_buttons(),
                 )
                 return
             info_id = act.info_id
             tg_text = act.get_telegram_text()
-        kb = markups.docs_keyboard(docs=Doc.get_by_info_id(session, info_id=info_id), back=call.back)
+        kb = markups.docs_keyboard(
+            docs=Doc.get_by_info_id(session, info_id=info_id), back=call.back
+        )
     if edit:
         bot.edit_message_text(
             text=call.message.html_text,
@@ -206,29 +231,43 @@ def info_docs(call):
             message_id=call.message.id,
             parse_mode="html",
             reply_markup=kb,
-            disable_web_page_preview=True
+            disable_web_page_preview=True,
         )
     else:
         bot.send_message(
-            text=tg_text, chat_id=call.chat.id, parse_mode="html", reply_markup=kb, disable_web_page_preview=True
+            text=tg_text,
+            chat_id=call.chat.id,
+            parse_mode="html",
+            reply_markup=kb,
+            disable_web_page_preview=True,
         )
 
 
 @bot.message_handler(commands=["start"])
 def welcome(m):
-    """ Sends welcome message to new users """
+    """Sends welcome message to new users"""
     if m.user.state == -1:
         text = templates["italian"]["messages"]["welcome"].format(
             user_name=m.user.firstname, bot_name=config.main.name
         )
         bot.reply_to(text=text, message=m, parse_mode="html")
         text = templates["italian"]["messages"]["welcome_2"]
-        bot.send_message(text=text, chat_id=m.chat.id, parse_mode="html", reply_markup=markups.default_buttons())
+        bot.send_message(
+            text=text,
+            chat_id=m.chat.id,
+            parse_mode="html",
+            reply_markup=markups.default_buttons(),
+        )
         with SessionFactory() as session:
             User.update_by_id(session, id_=m.user.id, dct={"state": 0})
     else:
         text = templates["italian"]["errors"]["started"]
-        bot.reply_to(text=text, message=m, parse_mode="html", reply_markup=markups.default_buttons())
+        bot.reply_to(
+            text=text,
+            message=m,
+            parse_mode="html",
+            reply_markup=markups.default_buttons(),
+        )
 
 
 # endregion START
@@ -242,7 +281,10 @@ def info_extra(call):
     bot.answer_callback_query(call.id, text=call_answer)
     with SessionFactory() as session:
         act = Act.get_by_uuid(session, uuid=call.data)
-        dct_info = [f"• {k.replace('_', ' ').capitalize()}: <code>{v}</code>" for k, v in act.info.extra_info.items()]
+        dct_info = [
+            f"• {k.replace('_', ' ').capitalize()}: <code>{v}</code>"
+            for k, v in act.info.extra_info.items()
+        ]
         isp_text = ""
         if act.info.isp:
             isp_list = [isp.title() for isp in act.info.isp.keys()]
@@ -250,22 +292,29 @@ def info_extra(call):
         text = templates["italian"]["messages"]["extra_info"].format(
             dct_info="\n".join(dct_info), is_tlc=str(act.is_tlc), isp=isp_text
         )
-        hide_report = bool(UserReport.get_by_id(session, user_id=call.user.id, act_id=act.id))
+        hide_report = bool(
+            UserReport.get_by_id(session, user_id=call.user.id, act_id=act.id)
+        )
     kb = types.InlineKeyboardMarkup(row_width=1)
     if not hide_report:
         kb.add(
             types.InlineKeyboardButton(
                 templates["italian"]["keyboard"]["inline_buttons"]["report"],
-                callback_data=f"a.report:{call.data}:{call.back}"
+                callback_data=f"a.report:{call.data}:{call.back}",
             )
         )
     kb.add(
         types.InlineKeyboardButton(
-            templates["italian"]["keyboard"]["inline_buttons"]["back"], callback_data=call.back
+            templates["italian"]["keyboard"]["inline_buttons"]["back"],
+            callback_data=call.back,
         )
     )
     bot.edit_message_text(
-        text=text, chat_id=call.message.chat.id, message_id=call.message.id, parse_mode="html", reply_markup=kb
+        text=text,
+        chat_id=call.message.chat.id,
+        message_id=call.message.id,
+        parse_mode="html",
+        reply_markup=kb,
     )
 
 
@@ -279,10 +328,16 @@ def report_error(call):
             user_id=call.user.id,
             username=html.escape(call.user.username),
             act=html.escape(str(act)),
-            deeplink=deeplink
+            deeplink=deeplink,
         )
-        Message.create(session, username=config.support.chat_id, text=text, priority=1000)
-    text = templates["italian"]["messages"]["report-error"] if result else templates["italian"]["messages"]["report"]
+        Message.create(
+            session, username=config.support.chat_id, text=text, priority=1000
+        )
+    text = (
+        templates["italian"]["messages"]["report-error"]
+        if result
+        else templates["italian"]["messages"]["report"]
+    )
     # if not act.is_tlc:
     #     text += "\n\n" + templates["italian"]["messages"]["report_track_all"]
     bot.answer_callback_query(call.id, text=text, show_alert=True)
@@ -295,8 +350,12 @@ def report_error(call):
 @bot.callback_query_handler(func=lambda call: True and call.action == "c.list")
 @bot.message_handler(commands=["lista"])
 @bot.message_handler(commands=["aggiungi"])
-@bot.message_handler(func=lambda m: m.text == templates["italian"]["keyboard"]["buttons"]["add"])
-@bot.message_handler(func=lambda m: m.text == templates["italian"]["keyboard"]["buttons"]["list"])
+@bot.message_handler(
+    func=lambda m: m.text == templates["italian"]["keyboard"]["buttons"]["add"]
+)
+@bot.message_handler(
+    func=lambda m: m.text == templates["italian"]["keyboard"]["buttons"]["list"]
+)
 def court_list(m):
     with SessionFactory() as session:
         User.update_by_id(session, id_=m.user.id, dct={"state": 0})
@@ -313,12 +372,21 @@ def court_list(m):
             edit = False
     # c.info:town.info:c.list
     kb = markups.trackings_list(
-        courts=courts, count=count, action="c.info", back="c.list", page=m.user.page, user_id=m.user.id
+        courts=courts,
+        count=count,
+        action="c.info",
+        back="c.list",
+        page=m.user.page,
+        user_id=m.user.id,
     )
     text = templates["italian"]["messages"]["court_add"]
     if edit:
         bot.edit_message_text(
-            text=text, chat_id=m.message.chat.id, message_id=m.message.id, parse_mode="html", reply_markup=kb
+            text=text,
+            chat_id=m.message.chat.id,
+            message_id=m.message.id,
+            parse_mode="html",
+            reply_markup=kb,
         )
     else:
         bot.send_message(text=text, chat_id=m.chat.id, reply_markup=kb)
@@ -335,15 +403,24 @@ def court_page_change(call):
         User.update_by_id(session, id_=call.user.id, dct={"page": call.user.page})
         courts, count = Tracking.paginate(session, page=call.user.page, page_size=12)
     kb = markups.trackings_list(
-        courts=courts, count=count, action="c.info", back="c.list", page=call.user.page, user_id=call.user.id
+        courts=courts,
+        count=count,
+        action="c.info",
+        back="c.list",
+        page=call.user.page,
+        user_id=call.user.id,
     )
-    bot.edit_message_reply_markup(chat_id=call.message.chat.id, message_id=call.message.id, reply_markup=kb)
+    bot.edit_message_reply_markup(
+        chat_id=call.message.chat.id, message_id=call.message.id, reply_markup=kb
+    )
 
 
 @bot.callback_query_handler(func=lambda call: call.action == "c.add")
 def court_add_select(call):
     with SessionFactory() as session:
-        court, is_dup = Tracking.create(session, user_id=call.user.id, court_id=call.data)
+        court, is_dup = Tracking.create(
+            session, user_id=call.user.id, court_id=call.data
+        )
     text = templates["italian"]["messages"]["track_tlc"]
     bot.answer_callback_query(call.id, text=text, show_alert=True)
     court_info(call)
@@ -364,10 +441,14 @@ def court_delete(call):
 def court_update(call):
     new_state = call.action == "c.track-all"
     with SessionFactory() as session:
-        Tracking.update(session, user_id=call.user.id, court_id=call.data, new_state=new_state)
+        Tracking.update(
+            session, user_id=call.user.id, court_id=call.data, new_state=new_state
+        )
         if new_state:
             court = session.get(Court, call.data)
-            text = templates["italian"]["messages"]["track_all"].format(court_name=court.name)
+            text = templates["italian"]["messages"]["track_all"].format(
+                court_name=court.name
+            )
         else:
             text = templates["italian"]["messages"]["track_tlc"]
     bot.answer_callback_query(call.id, text=text, show_alert=True)
@@ -376,4 +457,6 @@ def court_update(call):
 
 @bot.message_handler(func=lambda m: True)
 def error_handling(m):
-    bot.reply_to(text=templates["italian"]["errors"]["generic"], message=m, parse_mode="html")
+    bot.reply_to(
+        text=templates["italian"]["errors"]["generic"], message=m, parse_mode="html"
+    )

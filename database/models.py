@@ -25,26 +25,33 @@ from sqlalchemy.orm.exc import DetachedInstanceError
 from sqlalchemy.sql.expression import true
 from sqlalchemy.sql.sqltypes import BigInteger
 
-from database.utils import ActHelper, DocHelper, MessageHelper, TrackingHelper, UserHelper, UserReportHelper
+from database.utils import (
+    ActHelper,
+    DocHelper,
+    MessageHelper,
+    TrackingHelper,
+    UserHelper,
+    UserReportHelper,
+)
 
 Base = declarative_base()
 
 
-class ReprBase():
+class ReprBase:
     def __repr__(self) -> str:
         return self._repr(id=self.id)
 
     def _repr(self, **fields: Dict[str, Any]) -> str:
-        '''
+        """
         Helper for __repr__
-        '''
+        """
         field_strings = []
         at_least_one_attached_attribute = False
         for key, field in fields.items():
             try:
-                field_strings.append(f'{key}={field!r}')
+                field_strings.append(f"{key}={field!r}")
             except DetachedInstanceError:
-                field_strings.append(f'{key}=DetachedInstanceError')
+                field_strings.append(f"{key}=DetachedInstanceError")
             else:
                 at_least_one_attached_attribute = True
         if at_least_one_attached_attribute:
@@ -55,9 +62,15 @@ class ReprBase():
 class MixinSearch:
     @classmethod
     def fulltext_search(cls, session, search_string, field):
-        return session.query(cls). \
-            filter(func.to_tsvector('italian', getattr(cls, field))
-                   .match(search_string, postgresql_regconfig='italian')).all()
+        return (
+            session.query(cls)
+            .filter(
+                func.to_tsvector("italian", getattr(cls, field)).match(
+                    search_string, postgresql_regconfig="italian"
+                )
+            )
+            .all()
+        )
 
 
 class Platforms(enum.Enum):
@@ -69,14 +82,18 @@ class UserReport(ReprBase, UserReportHelper, Base):
     __tablename__ = "reports"
 
     # many to one - User -> Reports
-    user_id = Column(BigInteger, ForeignKey('users.id'), primary_key=True)
+    user_id = Column(BigInteger, ForeignKey("users.id"), primary_key=True)
     user = relationship("User", back_populates="reports", cascade="save-update")
     # many to one - Act -> Reports
-    act_id = Column(Integer, ForeignKey('acts.id'), primary_key=True)
+    act_id = Column(Integer, ForeignKey("acts.id"), primary_key=True)
     act = relationship("Act", back_populates="reports", cascade="save-update")
-    platform = Column(Enum(Platforms, validate_strings=True), nullable=False, default="telegram")
+    platform = Column(
+        Enum(Platforms, validate_strings=True), nullable=False, default="telegram"
+    )
     processed = Column(Boolean, default=False)
-    timestamp = Column(TIMESTAMP(timezone=True), nullable=False, server_default=func.now())
+    timestamp = Column(
+        TIMESTAMP(timezone=True), nullable=False, server_default=func.now()
+    )
 
     def __repr__(self):
         return self._repr(
@@ -86,19 +103,21 @@ class UserReport(ReprBase, UserReportHelper, Base):
             act=self.act,
             platform=self.platform,
             processed=self.processed,
-            timestamp=self.timestamp
+            timestamp=self.timestamp,
         )
 
 
 class Tracking(ReprBase, TrackingHelper, Base):
     __tablename__ = "trackings"
 
-    user_id = Column(BigInteger, ForeignKey('users.id'), primary_key=True)
+    user_id = Column(BigInteger, ForeignKey("users.id"), primary_key=True)
     user = relationship("User", back_populates="trackings", cascade="save-update")
-    court_id = Column(String(6), ForeignKey('courts.id'), primary_key=True)
+    court_id = Column(String(6), ForeignKey("courts.id"), primary_key=True)
     court = relationship("Court", back_populates="users", cascade="save-update")
     track_all = Column(Boolean, default=False)
-    timestamp = Column(TIMESTAMP(timezone=True), nullable=False, server_default=func.now())
+    timestamp = Column(
+        TIMESTAMP(timezone=True), nullable=False, server_default=func.now()
+    )
 
     def __repr__(self):
         return self._repr(
@@ -107,7 +126,7 @@ class Tracking(ReprBase, TrackingHelper, Base):
             court_id=self.court_id,
             court=self.court,
             track_all=self.track_all,
-            timestamp=self.timestamp
+            timestamp=self.timestamp,
         )
 
 
@@ -118,13 +137,18 @@ class Act(MixinSearch, ReprBase, ActHelper, Base):
     uuid = Column(String, unique=True)
     uuid_hr = Column(String, nullable=False, unique=True)
     # many to one - Court -> Acts
-    court_id = Column(String(6), ForeignKey('courts.id'), nullable=False, index=True)
+    court_id = Column(String(6), ForeignKey("courts.id"), nullable=False, index=True)
     court = relationship("Court", back_populates="acts", cascade="save-update")
     # one to one - Act -> ActInfo
-    info_id = Column(Integer, ForeignKey('acts-info.id'), nullable=False)
+    info_id = Column(Integer, ForeignKey("acts-info.id"), nullable=False)
     info = relationship(
         "ActInfo",
-        backref=backref("Act", uselist=False, single_parent=True, cascade="save-update, all, delete-orphan")
+        backref=backref(
+            "Act",
+            uselist=False,
+            single_parent=True,
+            cascade="save-update, all, delete-orphan",
+        ),
     )
     # one to many - Act -> Messages
     messages = relationship("Message", back_populates="act")
@@ -138,7 +162,9 @@ class Act(MixinSearch, ReprBase, ActHelper, Base):
     processed_at = Column(TIMESTAMP(timezone=True), index=True)
     process_time = Column(Time, nullable=True)
     error = Column(String, index=True)
-    timestamp = Column(TIMESTAMP(timezone=True), index=True, nullable=False, server_default=func.now())
+    timestamp = Column(
+        TIMESTAMP(timezone=True), index=True, nullable=False, server_default=func.now()
+    )
 
     def __repr__(self):
         return self._repr(
@@ -163,15 +189,22 @@ class Court(ReprBase, Base):
     # one to many - Court -> acts
     acts = relationship("Act", back_populates="court", cascade="save-update")
     act_count = column_property(
-        select([func.count(Act.id)]).where(Act.court_id == id).scalar_subquery(), deferred=True
+        select([func.count(Act.id)]).where(Act.court_id == id).scalar_subquery(),
+        deferred=True,
     )
     act_count_tlc = column_property(
-        select([func.count(Act.id)]).where(and_(Act.court_id == id, Act.is_tlc == true())).scalar_subquery(),
-        deferred=True
+        select([func.count(Act.id)])
+        .where(and_(Act.court_id == id, Act.is_tlc == true()))
+        .scalar_subquery(),
+        deferred=True,
     )
     # many to many - Courts -> Users
-    users = relationship("Tracking", back_populates="court", cascade="all, delete-orphan")
-    is_active_tlc = column_property(exists().where(and_(Act.court_id == id, Act.is_tlc == true())), deferred=True)
+    users = relationship(
+        "Tracking", back_populates="court", cascade="all, delete-orphan"
+    )
+    is_active_tlc = column_property(
+        exists().where(and_(Act.court_id == id, Act.is_tlc == true())), deferred=True
+    )
 
     def __repr__(self):
         return self._repr(
@@ -192,7 +225,7 @@ class Doc(MixinSearch, ReprBase, DocHelper, Base):
 
     id = Column(Integer, primary_key=True)
     # many to one - ActInfo > Doc - no reverse
-    info_id = Column(Integer, ForeignKey('acts-info.id'), index=True, nullable=False)
+    info_id = Column(Integer, ForeignKey("acts-info.id"), index=True, nullable=False)
     info = relationship("ActInfo", back_populates="docs", cascade="save-update")
     title = Column(String)
     type = Column(Enum(DocType, validate_strings=True))
@@ -200,7 +233,9 @@ class Doc(MixinSearch, ReprBase, DocHelper, Base):
     url_archive = Column(String)
     ocr = Column(TEXT)
     is_working = Column(Boolean, index=True)  # default=False
-    timestamp = Column(TIMESTAMP(timezone=True), nullable=False, index=True, server_default=func.now())
+    timestamp = Column(
+        TIMESTAMP(timezone=True), nullable=False, index=True, server_default=func.now()
+    )
 
     def __repr__(self):
         return self._repr(
@@ -210,7 +245,7 @@ class Doc(MixinSearch, ReprBase, DocHelper, Base):
             url=self.url,
             type=self.type,
             url_archive=self.url_archive,
-            is_working=self.is_working
+            is_working=self.is_working,
         )
 
 
@@ -226,7 +261,9 @@ class ActInfo(ReprBase, Base):
     # one to many - ActInfo > Doc
     docs = relationship("Doc", back_populates="info", cascade="all, delete-orphan")
     has_docs = column_property(exists().where(Doc.info_id == id))
-    timestamp = Column(TIMESTAMP(timezone=True), nullable=False, server_default=func.now())
+    timestamp = Column(
+        TIMESTAMP(timezone=True), nullable=False, server_default=func.now()
+    )
 
     def __repr__(self):
         return self._repr(
@@ -235,7 +272,7 @@ class ActInfo(ReprBase, Base):
             blacklist=self.blacklist,
             isp=self.isp,
             extra_info=self.extra_info,
-            docs=self.docs
+            docs=self.docs,
         )
 
 
@@ -249,17 +286,26 @@ class Interaction(ReprBase, Base):
     __tablename__ = "interactions"
 
     id = Column(Integer, primary_key=True)
-    platform = Column(Enum(Platforms, validate_strings=True), nullable=False, default="telegram")
+    platform = Column(
+        Enum(Platforms, validate_strings=True), nullable=False, default="telegram"
+    )
     type = Column(Enum(InteractionTypes, validate_strings=True), nullable=False)
     text = Column(String)
     # many to one - User -> Interactions
-    user_id = Column(BigInteger, ForeignKey('users.id'), nullable=False, index=True)
+    user_id = Column(BigInteger, ForeignKey("users.id"), nullable=False, index=True)
     user = relationship("User", back_populates="interactions", cascade="save-update")
-    timestamp = Column(TIMESTAMP(timezone=True), nullable=False, server_default=func.now())
+    timestamp = Column(
+        TIMESTAMP(timezone=True), nullable=False, server_default=func.now()
+    )
 
     def __repr__(self):
         return self._repr(
-            id=self.id, platform=self.platform, type=self.type, text=self.text, user_id=self.user_id, user=self.user
+            id=self.id,
+            platform=self.platform,
+            type=self.type,
+            text=self.text,
+            user_id=self.user_id,
+            user=self.user,
         )
 
 
@@ -277,12 +323,16 @@ class Payment(ReprBase, Base):
     reason = Column(Enum(PaymentReasons, validate_strings=True), nullable=False)
     email = Column(String, nullable=False, index=True)
     # many to one - User -> Payments
-    user_id = Column(BigInteger, ForeignKey('users.id'), index=True, nullable=False)
+    user_id = Column(BigInteger, ForeignKey("users.id"), index=True, nullable=False)
     user = relationship("User", back_populates="payments", cascade="save-update")
     # many to one - Subscription -> Payments
-    subscription_id = Column(Integer, ForeignKey('subscriptions.id'), nullable=True)
-    subscription = relationship("Subscription", back_populates="payments", cascade="save-update")
-    timestamp = Column(TIMESTAMP(timezone=True), index=True, nullable=False, server_default=func.now())
+    subscription_id = Column(Integer, ForeignKey("subscriptions.id"), nullable=True)
+    subscription = relationship(
+        "Subscription", back_populates="payments", cascade="save-update"
+    )
+    timestamp = Column(
+        TIMESTAMP(timezone=True), index=True, nullable=False, server_default=func.now()
+    )
 
     def __repr__(self):
         return self._repr(
@@ -293,7 +343,7 @@ class Payment(ReprBase, Base):
             user_id=self.user_id,
             user=self.user,
             subscription_id=self.subscription_id,
-            subscription=self.subscription
+            subscription=self.subscription,
         )
 
 
@@ -302,17 +352,24 @@ class Subscription(ReprBase, Base):
 
     id = Column(Integer, primary_key=True)
     # many to one - User -> Subscriptions
-    user_id = Column(BigInteger, ForeignKey('users.id'), index=True, nullable=False)
+    user_id = Column(BigInteger, ForeignKey("users.id"), index=True, nullable=False)
     user = relationship("User", back_populates="subscriptions", cascade="save-update")
     period = Column(TSTZRANGE, nullable=False, index=True)
     # one to many - Subscription -> Payments
-    payments = relationship("Payment", back_populates="subscription", cascade="save-update")
+    payments = relationship(
+        "Payment", back_populates="subscription", cascade="save-update"
+    )
     times_extended = column_property(
-        select([func.count(Payment.id)]).where(Payment.subscription_id == id).scalar_subquery(), deferred=True
+        select([func.count(Payment.id)])
+        .where(Payment.subscription_id == id)
+        .scalar_subquery(),
+        deferred=True,
     )
 
     def __repr__(self):
-        return self._repr(id=self.id, user_id=self.user_id, user=self.user, period=self.period)
+        return self._repr(
+            id=self.id, user_id=self.user_id, user=self.user, period=self.period
+        )
 
 
 class User(ReprBase, UserHelper, Base):
@@ -329,21 +386,37 @@ class User(ReprBase, UserHelper, Base):
     is_admin = Column(Boolean, default=False, index=True)
     is_banned = Column(Boolean, default=False, index=True)
     # many to many - Courts -> Users"
-    trackings = relationship("Tracking", back_populates="user", cascade="all, delete-orphan")
-    has_trackings = column_property(exists().where(Tracking.user_id == id), deferred=True)
+    trackings = relationship(
+        "Tracking", back_populates="user", cascade="all, delete-orphan"
+    )
+    has_trackings = column_property(
+        exists().where(Tracking.user_id == id), deferred=True
+    )
     courts = association_proxy("trackings", "court")
     # many to one - User -> Payments
     payments = relationship("Payment", back_populates="user", cascade="save-update")
     # one to many - User -> Interactions
-    interactions = relationship("Interaction", back_populates="user", cascade="all, delete-orphan")
+    interactions = relationship(
+        "Interaction", back_populates="user", cascade="all, delete-orphan"
+    )
     # one to many - User -> Messages
     messages = relationship("Message", back_populates="user", cascade="save-update")
     # one to many - User -> Subscriptions
-    subscriptions = relationship("Subscription", back_populates="user", cascade="save-update")
+    subscriptions = relationship(
+        "Subscription", back_populates="user", cascade="save-update"
+    )
     # one to many - User -> Reports
-    reports = relationship("UserReport", back_populates="user", cascade="all, delete-orphan")
-    first_message = Column(TIMESTAMP(timezone=True), nullable=False, server_default=func.now())
-    last_update = Column(TIMESTAMP(timezone=True), server_default=func.now(), onupdate=func.current_timestamp())
+    reports = relationship(
+        "UserReport", back_populates="user", cascade="all, delete-orphan"
+    )
+    first_message = Column(
+        TIMESTAMP(timezone=True), nullable=False, server_default=func.now()
+    )
+    last_update = Column(
+        TIMESTAMP(timezone=True),
+        server_default=func.now(),
+        onupdate=func.current_timestamp(),
+    )
 
     @hybrid_property
     def fullname(self):
@@ -363,7 +436,7 @@ class User(ReprBase, UserHelper, Base):
             is_premium=self.is_premium,
             is_admin=self.is_admin,
             is_banned=self.is_banned,
-            first_message=self.first_message
+            first_message=self.first_message,
         )
 
 
@@ -372,10 +445,10 @@ class Message(ReprBase, MessageHelper, Base):
 
     id = Column(Integer, primary_key=True)
     # many to one - User -> Messages
-    user_id = Column(BigInteger, ForeignKey('users.id'), nullable=True)
+    user_id = Column(BigInteger, ForeignKey("users.id"), nullable=True)
     user = relationship("User", back_populates="messages", cascade="save-update")
     # many to one - Act -> Messages
-    act_id = Column(Integer, ForeignKey('acts.id'), nullable=True)
+    act_id = Column(Integer, ForeignKey("acts.id"), nullable=True)
     act = relationship("Act", back_populates="messages", cascade="save-update")
     text = Column(String, nullable=False)
     url_preview = Column(Boolean, default=True, nullable=False)
@@ -388,7 +461,9 @@ class Message(ReprBase, MessageHelper, Base):
     message_id = Column(Integer)
     chat_id = Column(BigInteger)
     priority = Column(Integer, index=True, default=0)
-    timestamp = Column(TIMESTAMP(timezone=True), nullable=False, server_default=func.now())
+    timestamp = Column(
+        TIMESTAMP(timezone=True), nullable=False, server_default=func.now()
+    )
 
     def __repr__(self):
         return self._repr(
@@ -404,15 +479,18 @@ class Message(ReprBase, MessageHelper, Base):
             username=self.username,
             message_id=self.message_id,
             chat_id=self.chat_id,
-            priority=self.priority
+            priority=self.priority,
         )
 
 
 Court.has_users = column_property(
-    exists().where(Tracking.court_id == Court.id).correlate_except(Tracking), deferred=True
+    exists().where(Tracking.court_id == Court.id).correlate_except(Tracking),
+    deferred=True,
 )
 Court.user_count = column_property(
-    select([func.count(Tracking.user_id)]).where(Tracking.court_id == Court.id
-                                                 ).correlate_except(Tracking).scalar_subquery(),
-    deferred=True
+    select([func.count(Tracking.user_id)])
+    .where(Tracking.court_id == Court.id)
+    .correlate_except(Tracking)
+    .scalar_subquery(),
+    deferred=True,
 )
